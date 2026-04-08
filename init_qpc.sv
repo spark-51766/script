@@ -1,12 +1,12 @@
 // ==============================================================
-//  task init_qpc  – QPC 初始化 (seg 3~16，排除 rsv 字段和初始值为空的字段)
-//  来源 : 天蝎RDMA数据结构v3.83.xlsx  Sheet: QPC
-//  生成字段数: 458
-//  范围: seg 3 ~ 16 (跳过 seg 0,1,2)
+//  task init_qpc  - QPC initialization (seg 3~16, exclude rsv fields and empty init values)
+//  Source : 天蝎RDMA数据结构v3.83.xlsx  Sheet: QPC
+//  Total fields: 458
+//  Range: seg 3 ~ 16 (skip seg 0,1,2)
 // ==============================================================
 
 task init_qpc(
-    ref rdma_rxe_qpc_entends hca_qpc,
+    ref rdma_rxe_qpc_extends hca_qpc,
     input bit                  veroce_en
 );
 

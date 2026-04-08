@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-从 QPC sheet 生成 task init_qpc 的 SystemVerilog 初始化代码。
+Generate task init_qpc SystemVerilog initialization code from QPC sheet.
 
-用法:
-    python gen_init_qpc_task.py                          # 使用默认路径
-    python gen_init_qpc_task.py "path/to/file.xlsx"      # 指定 Excel 文件
+Usage:
+    python gen_init_qpc_task.py                          # use default path
+    python gen_init_qpc_task.py "path/to/file.xlsx"      # specify Excel file
 
-输出:
-    init_qpc.sv  – task init_qpc (seg 3~16 字段初始化)
+Output:
+    init_qpc.sv  - task init_qpc (seg 3~16 field initialization)
 """
 
 import re
@@ -320,16 +320,16 @@ def build_task(df: pd.DataFrame, xlsx_name: str) -> str:
     def ln(s=""):
         out.append(s)
 
-    # ════════════ 文件头 ════════════
+    # ════════════ File header ════════════
     ln("// ==============================================================")
-    ln("//  task init_qpc  – QPC 初始化 (seg 3~16，排除 rsv 字段和初始值为空的字段)")
-    ln(f"//  来源 : {xlsx_name}  Sheet: {SHEET}")
-    ln(f"//  生成字段数: {total_fields}")
-    ln(f"//  范围: seg {min(TARGET_SEGS)} ~ {max(TARGET_SEGS)} (跳过 seg 0,1,2)")
+    ln("//  task init_qpc  - QPC initialization (seg 3~16, exclude rsv fields and empty init values)")
+    ln(f"//  Source : {xlsx_name}  Sheet: {SHEET}")
+    ln(f"//  Total fields: {total_fields}")
+    ln(f"//  Range: seg {min(TARGET_SEGS)} ~ {max(TARGET_SEGS)} (skip seg 0,1,2)")
     ln("// ==============================================================")
     ln()
     ln("task init_qpc(")
-    ln("    ref rdma_rxe_qpc_entends hca_qpc,")
+    ln("    ref rdma_rxe_qpc_extends hca_qpc,")
     ln("    input bit                  veroce_en")
     ln(");")
 
@@ -369,10 +369,10 @@ def main():
     xlsx_name = xlsx_path.name
     out_dir   = Path(__file__).parent.resolve()  # 输出到脚本同目录
 
-    print(f"[gen_init_qpc_task] 读取  {xlsx_path}  sheet={SHEET}")
+    print(f"[gen_init_qpc_task] Reading  {xlsx_path}  sheet={SHEET}")
     df = load_sheet(xlsx_path, SHEET)
-    print(f"  总字段数   : {len(df)}")
-    print(f"  目标 seg   : {sorted(TARGET_SEGS)}")
+    print(f"  Total fields   : {len(df)}")
+    print(f"  Target seg     : {sorted(TARGET_SEGS)}")
 
     work_df = df[df["_seg"].isin(TARGET_SEGS)].copy()
     work_df = work_df[
@@ -381,12 +381,12 @@ def main():
     work_df = work_df[
         work_df["初始值"].apply(lambda v: pd.notna(v) and str(v).strip() != "")
     ]
-    print(f"  生成字段数 : {len(work_df)} (排除 rsv 和空初始值)")
+    print(f"  Generated       : {len(work_df)} (exclude rsv and empty init values)")
 
     code = build_task(df, xlsx_name)
     out_path = out_dir / "init_qpc.sv"
     out_path.write_text(code, encoding="utf-8")
-    print(f"  输出       {out_path}  ({code.count(chr(10))} 行)")
+    print(f"  Output      {out_path}  ({code.count(chr(10))} lines)")
 
 
 if __name__ == "__main__":
