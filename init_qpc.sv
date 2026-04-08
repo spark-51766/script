@@ -1,7 +1,7 @@
 // ==============================================================
-//  task init_qpc  – QPC 初始化 (seg 3~16)
+//  task init_qpc  – QPC 初始化 (seg 3~16，排除 rsv 字段和初始值为空的字段)
 //  来源 : 天蝎RDMA数据结构v3.83.xlsx  Sheet: QPC
-//  生成字段数: 504
+//  生成字段数: 458
 //  范围: seg 3 ~ 16 (跳过 seg 0,1,2)
 // ==============================================================
 
@@ -11,19 +11,9 @@ task init_qpc(
 );
 
     // ── seg 03 ──
-    hca_qpc.qpc_seg3.sw_uid = '0;  // 软件配置的user_id，创建QP时填入，修改/查询/销毁QP时校验，当uid为0时不校验
-    hca_qpc.qpc_seg3.host_id = '0;  // Host ID
-    hca_qpc.qpc_seg3.pfid = '0;  // PF ID,用于判断属于哪个PF，使用不同的CC参数等
-    hca_qpc.qpc_seg3.fid = '0;  // Function ID
-    hca_qpc.qpc_seg3.func_qcounter_index = '0;  // 当前QP绑定的Function级别Qcounter index，在func_qcounter_index_en为1时有效
-    hca_qpc.qpc_seg3.func_qcounter_index_en = '0;  // 为1表示当前QP绑定了Function级别的Qcounter
-    hca_qpc.qpc_seg3.rsv = '0;  // rsv
-    hca_qpc.qpc_seg3.local_qpn = '0;  // 当前QPC对应的QPN，用于硬件校验
-    hca_qpc.qpc_seg3.rsv = '0;  // rsv
     hca_qpc.qpc_seg3.qp_ud_sqer2rts_phase_flag = '0;  // 当软件发送的Modify命令为SQEr2RTS时取反该信号
     hca_qpc.qpc_seg3.qp_rc_sqd2rts_phase_flag = '0;  // 当软件发送的Modify命令为SQD2RTS时取反该信号
     hca_qpc.qpc_seg3.qp_destroy_flag = '0;  // 当前QP执行过QP销毁，未创建执行modify或重复销毁操作则会报错
-    hca_qpc.qpc_seg3.rsv = '0;  // rsv
     hca_qpc.qpc_seg3.sq_cq_overflow_flag = '0;  // SQ绑定的CQ溢出时，该标志置1，如果SQ和RQ绑定同一个CQ，则sq_cq_overflow_flag和rq_cq_overflow_flag同时置1（MQ_PROC在创建QP或INIT2RTR时初始化成0，后续由CQEQ_PROC管理）
     hca_qpc.qpc_seg3.rq_cq_overflow_flag = '0;  // RQ绑定的CQ溢出时，该标志置1，如果SQ和RQ绑定同一个CQ，则sq_cq_overflow_flag和rq_cq_overflow_flag同时置1（MQ_PROC在创建QP或INIT2RTR时初始化成0，后续由CQEQ_PROC管理）
 
@@ -47,7 +37,6 @@ task init_qpc(
     hca_qpc.qpc_seg4.txw_cq_rq_overflow_flag = '0;  // 置1：获取过rq_overflow的信息
     hca_qpc.qpc_seg4.txw_sq_cur_path_id = '0;  // SQ当前使用的path 号，在做速率控制时控制使用哪种path的参数；在非多路径模式下，固定为0；在多路径模式下，在当前对应path 令牌消耗完毕后path_id ++，或者在一次DB调度结束后path_id ++ （仅代表rq 报文处理）
     hca_qpc.qpc_seg4.txw_sq_path_mask = '0;  // 为1代表SQ在端侧乱序模式下，锁定当前路径时，DB调度时，出现了令牌桶受限的场景；当调度到SQ门铃时，且此时令牌桶不受限，清除此位。
-    hca_qpc.qpc_seg4.rsv = '0;  // rsv
     hca_qpc.qpc_seg4.txwqe_stat_rate_already_init = '0;  // 0:没有初始化过静态速率，1：初始化过静态速率。
     hca_qpc.qpc_seg4.txwqe_sq_wqe_occupty = '0;  // SQ门铃敲入时发现信用不够，不能响应本次请求，txw_sq_occupty置位1，下次如果是RESP门铃，resp门铃不执行。当sq门铃敲入时，如果令牌充足，这个标志会清0。
     hca_qpc.qpc_seg4.txwqe_rsp_occupty = '0;  // 标识当前调度需要服务response 门铃，如果遇到sq 门铃直接回挂。
@@ -65,7 +54,6 @@ task init_qpc(
     hca_qpc.qpc_seg4.txw_path2_rate_bucket = '0;  // path0 令牌桶，初始化时根据Bucket Type将桶填满，以B为单位，负值以补码形式; 多路径时 path2的令牌桶，非多路径时也使用这个令牌桶
     hca_qpc.qpc_seg4.txw_path3_rate_bucket = '0;  // path0 令牌桶，初始化时根据Bucket Type将桶填满，以B为单位，负值以补码形式; 多路径时 path3的令牌桶，非多路径时也使用这个令牌桶
     hca_qpc.qpc_seg4.txw_path_disable_flag = '0;  // 记录是否发生过path_disable的事件，此值为高时，令牌桶为负值22'h20_0000，不再使用此路径调度，若seg.path_disable为0，需要初始化此桶深为寄存器基于function配置的压缩比值。
-    hca_qpc.qpc_seg4.rsv = '0;  // rsv
 
     // ── seg 05 ──
     hca_qpc.qpc_seg5.txwqe_sq_wqe_ci = '0;  // sqe硬件读指针，64B为单位，指向当前wqe的头位置，初始值为0
@@ -97,7 +85,6 @@ task init_qpc(
     hca_qpc.qpc_seg5.txwqe_sq_retry_type = '0;  // 记录的重传类型，用做重传超限的计数判断。1:RNR重传  0:NAK重传
     hca_qpc.qpc_seg5.txwqe_sq_nak_retry_cnt = '0;  // 本地维护的NAK重传次数,用作重传超限判断。
     hca_qpc.qpc_seg5.txwqe_sq_rnr_retry_cnt = '0;  // 本地维护的RNR重传次数,用作重传超限判断。
-    hca_qpc.qpc_seg5.rsv = '0;
     hca_qpc.qpc_seg5.txwqe_sq_retry_noctrl_to_txeng = '0;  // 启动重传后，标识还未给txeng发送重传起始标记。若有ctrl info发给txeng需要打标start_retry标记，同时拉低此位。或者退出重传时拉低此位。
     hca_qpc.qpc_seg5.txwqe_sq_bkn_retry_flag = '0;  // Veroce 重传使用，txwqe_sq_retry_flag为高时有效，表示正在进行go back N的重传
     hca_qpc.qpc_seg5.txwqe_sq_retry_wqe_idx = '0;  // sq重传时需要发送wqe对应首个wqebb的 idex 在重传开始，从rxi的qpc中copy过来（rxi_ssnt_wqe_wrid），后续重传过程中自己维护 首次重传，除了需要使用rxi_ssnt_wqe_idx，还需要使用，rxi_ssnt_wqe_start_psn和rxi_ssnt_wqe_data_length来计算wqe内部sge及其data的偏移。Veroce场景下同retry_psn的使用方式
@@ -108,7 +95,6 @@ task init_qpc(
     hca_qpc.qpc_seg5.txwqe_sq_retry_bk_irbk_ptr = '0;  // sq重传时，如果时read重传，所需要携带的irbk的指针 首次重传需要从rxi的qpc中snnt的irbk指针结合wqe 扫描获取；
     hca_qpc.qpc_seg5.txwqe_sq_retry_bk_rsp_ptr = '0;  // sq重传时，如果时read重传，所需要携带的对端rsp cache的指针 首次重传需要从rxi的qpc中snnt的rsp ptr计算获取
     hca_qpc.qpc_seg5.txwqe_sq_ssnt_wr_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // txwqe记录的当前发送的ssnt的写指针，用作message的outstanding个数计算
-    hca_qpc.qpc_seg5.rsv = '0;
     hca_qpc.qpc_seg5.txwqe_sq_local_ce = '0;  // 最近最新处理完成local操作所对应的CE
     hca_qpc.qpc_seg5.txwqe_sq_retry_end_psn = '0;  // SQ重传的终点PSN，重传范围不包含该PSN。
     hca_qpc.qpc_seg5.txwqe_sq_retry_bk_sge_addr = '0;  // sq重传时wqe断点，需要执行sge在wqe内部的偏移 首次重传，除了需要使用rxi_ssnt_wqe_idx，还需要使用，rxi_ssnt_wqe_start_psn和rxi_ssnt_wqe_data_length来计算wqe内部sge及其data的偏移
@@ -117,7 +103,6 @@ task init_qpc(
     hca_qpc.qpc_seg5.txwqe_sq_local_opcode_fence_flag = '0;  // Veroce 下使用，表示当前处于local fence状态 在处理到local 操作，且local_phase_tag 和rxeng的不等，将该信号置1，在local_phase_tag相同时清0；在sq执行如果local_fence_flag为高，且local_phase_tag不同时直接回挂空门铃。
     hca_qpc.qpc_seg5.txwqe_sq_retry_bk_sge_ofs = '0;  // sq重传时wqe断点，需要执行数据在sge内的偏移 首次重传，除了需要使用rxi_ssnt_wqe_idx，还需要使用，rxi_ssnt_wqe_start_psn和rxi_ssnt_wqe_data_length来计算wqe内部sge及其data的偏移
     hca_qpc.qpc_seg5.txwqe_sq_req_read_psn = sw.send_start_psn;  // 用于做response 侧8M psn outstanding的控制，用作I端read 长超时qp置错使用，该psn为当前read、atomic发送后移动到psn的位置，初始值SEG0.send_start_psn
-    hca_qpc.qpc_seg5.rsv = '0;
     hca_qpc.qpc_seg5.txwqe_sq_nxt_wqe_psn = '0;  // 下一个WQE占用的psn个数，PSN范围检查失败的时候更新，下次在QPC检查时进行预判断.  Veroce 时遇到read 请求，记录的就是read 占用response psn的数量，在做psn检查时需要既做req 请求8M范围的检查，又要做response 8M范围的检查，和nxt_wqe_type配合一起使用
     hca_qpc.qpc_seg5.txwqe_sq_retry_psn_vld = '0;  // Veroce 重传结束后，置1，代表当前重传断点有效，若txwqe_sq_dif_bk_sge_ofs（timer)记录的时间和系统时间超过某一个阈值（寄存器可配，默认值为40us）后，或者是txwqe_sq_wqe_sq_retry_psn在rxi_sq_oldest_unack_psn左侧或者相等，置0；
     hca_qpc.qpc_seg5.txwqe_sq_nxt_wqe_type = '0;  // Veroce 下使用，标注下一个wqe 的类型；0x0 表示下一个wqe类型为非read/atomic；0x1表示下一个wqe类型非为read/atomic；在PSN范围检查时使用，下次在qpc检查时进行预判断
@@ -132,7 +117,6 @@ task init_qpc(
     hca_qpc.qpc_seg5.txwqe_sq_outsdanding_check_en = '0;  // read/atomic在途sge个数导致跳过sq处理，下次qp调度满足该条件后获取wqe
     hca_qpc.qpc_seg5.txwqe_sq_bk_block = '0;  // dif模式下，正常wqe发送时，计算dif个数的block断点长度，sq_bk_vld为高时有效： Veroce模式下：txwqe_sq_retry_rqeth_msn[12:0]，重传的rqmsn，rqe的index，即请求报文中的RQETH中的RQMSN
     hca_qpc.qpc_seg5.txwqe_sq_retry_bk_block = '0;  // dif模式下，重传wqe发送时，计算dif个数的block断点长度，sq_bk_vld为高时有效； Veroce模式下：低11bit为txwqe_sq_retry_rqeth_msn[23:13]，重传的rqmsn，rqe的index，即请求报文中的RQETH中的RQMSN，剩余2bit为rsv
-    hca_qpc.qpc_seg5.rsv = '0;
     hca_qpc.qpc_seg5.txwqe_sq_retry_wqe_start_psn = '0;  // 重传期间当前正在处理的wqe的起始psn
     hca_qpc.qpc_seg5.txwqe_sq_retry_end_wrid_0 = '0;  // Veroce复用为重传预取到的wrid[7:0]，VeRoCE下预取到的wrid的值，当重传结束的时候，需要把多预取的wqe invalid掉
     hca_qpc.qpc_seg5.txwqe_sq_retry_ssn = '0;  // 重传期间当前正在wqe的ssn，或者是处理完成后的下一个wqe的ssn
@@ -145,7 +129,6 @@ task init_qpc(
     hca_qpc.qpc_seg6.txwqe_rsp_max_rd_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // read rsp的指针右边界，每发送一笔normal resp的last/only报文后更新，不回退，同时用于rxt判断read ost
     hca_qpc.qpc_seg6.txwqe_rsp_cur_rd_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // read rsp实时正在执行的rsp cache指针，受重传影响会回退，执行normal resp时与max ptr同步推进； veroce下复用重传断点的指针
     hca_qpc.qpc_seg6.txwqe_rsp_retry_start_ptr = '0;  // read rsp重传起始点的rsp cache指针，当txwqe_rsp_retry_cnt与rxt_rsp_retry_cnt不相等时，同步为rxt_rsp_retry_start_ptr
-    hca_qpc.qpc_seg6.rsv = '0;  // rsv
     hca_qpc.qpc_seg6.txwqe_rsp_retry_end_ptr = '0;  // read rsp重传结束点的rsp cache指针，同步为rxt_rsp_retry_end_ptr
     hca_qpc.qpc_seg6.txwqe_rsp_retry_cnt = '0;  // 判断是否有新的rsp 重传范围；初始值为0，在检测到rxt_rsp_retry_cnt != txwqe_rsp_retry_cnt时进入新的重传，同时将 txwqe_rsp_retry_cnt刷新成rxt_rsp_retry_cnt的值； veroce下由于sack引发的重传，和rxt_sel_retry_cnt比较
     hca_qpc.qpc_seg6.txwqe_rsp_bk_whole_vld = '0;  // read rsp存储的完整断点信息有效指示信号，在读取resp entry之后，校验长度发现信用一个报文都不够发送，则完整记录这个entry，重传时，完整的rsp断点，发送opcode受go bak n影响，非完整的rsp断点，不受go bak n影响，normal时，完整的rsp从first/only处发送，非完整的从middle/last处发送；
@@ -162,7 +145,6 @@ task init_qpc(
     hca_qpc.qpc_seg6.txwqe_rsp_tmo_retry_cnt = '0;  // Veroce下回复read resp重传超限的cnt，默认值为0
     hca_qpc.qpc_seg6.txwqe_rsp_bk_psn = hca_qpc.qpc_seg00.rcv_start_psn-1;  // read rsp存储的断点信息中的psn号，在获取rsp cache时，初始psn需要从rsp cache中获取，执行rsp cache sge中间需要从该处获取发送psn号; [23:0]veroce下为T端ack响应的psn号
     hca_qpc.qpc_seg6.txwqe_req_sack_send_retry_cnt = '0;  // veroce下T端在同一个PSN点回复sack的次数，每次刷新txwqe_rsp_bk_psn就清0，当同一个psn的重传次数达到某一个值（txwqe内部寄存器配置，默认8），就不再响应相同psn点的sack
-    hca_qpc.qpc_seg6.rsv = '0;  // rsv
     hca_qpc.qpc_seg6.txwqe_rsp_bk_len = '0;  // read rsp存储的断点信息中的长度信息，在获取rsp cache时，初始len需要从rsp cache中获取，发送部分报文后，根据已发送的长度推进更新
     hca_qpc.qpc_seg6.txwqe_rsp_bk_data_sge_addr = '0;  // rsq normal发送时dif wqe断点，需要执行sge data在wqe内部的偏移，wqe断点sge块偏移地址，单位16Byte
     hca_qpc.qpc_seg6.txwqe_rsp_bk_dif_sge_addr = '0;  // rsq normal发送时dif wqe断点，需要执行sge dif在wqe内部的偏移，wqe断点sge块偏移地址，单位16Byte
@@ -191,7 +173,6 @@ task init_qpc(
     hca_qpc.qpc_seg6.txwqe_rsp_retry_bk_dif_sge_ofs = '0;  // rsq重传发送时dif wqe断点，需要执行的dif在sge内的偏移； Veroce 下为timestamp，us为单位；
     hca_qpc.qpc_seg6.txwqe_rsp_ack_psn = '0;  // veroce下，I端ack响应的psn号
     hca_qpc.qpc_seg6.txwqe_rsp_sack_send_retry_cnt = '0;  // veroce下I端在同一个PSN点回复sack的次数，每次刷新txwqe_rsp_ack_psn就清0，当同一个psn的重传次数达到某一个值（txwqe内部寄存器配置，默认8），就不再响应相同psn点的sack
-    hca_qpc.qpc_seg6.rsv = '0;
 
     // ── seg 07 ──
     hca_qpc.qpc_seg7.long_bitmap = '0;  // 用于记录TX注册的normal超时信息的bitmap或者veroce send、write注册的长超时信息
@@ -199,7 +180,6 @@ task init_qpc(
     hca_qpc.qpc_seg7.short_resp_bitmap = '0;  // 用于记录Veroce txeng注册的resp的短超时bitmap
     hca_qpc.qpc_seg7.long_read_req_bitmap = '0;  // 用于Veroce txeng注册的read req的长超时bitmap
     hca_qpc.qpc_seg7.long_read_resp_bitmap = '0;  // 用于记录Veroce txeng注册的read resp的长超时bitmap
-    hca_qpc.qpc_seg7.rsv = '0;  // rsv
 
     // ── seg 08 ──
     hca_qpc.qpc_seg8.txeng_qpc_rtr2rts_flag = '0;  // TX_ENG完成psn初始化标志位，具体初始化流程：收到txwqe首个SQ请求时决定是否要初始化tx_newest_unack_psn和tx_oldst_unack_psn标志位，0代表要初始化，初始化后置1，QP被初始化时被重置为0
@@ -211,7 +191,6 @@ task init_qpc(
     hca_qpc.qpc_seg8.txeng_qp_rst_destroy_flag = '0;  // 当前qp完成复位或者销毁操作的标志，用于dfx
     hca_qpc.qpc_seg8.txeng_sq_diff_err_flag = '0;  // TX_ENG在处理非重传的sq wr first/middle报文出现dif错误时置位，在处理非重传的wr last报文时清零
     hca_qpc.qpc_seg8.txeng_flush_flag = '0;  // QP 上送过FLUSH CQE标识（不包括sigerr cqe）
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_qp_state = 4'h3;  // QP的状态： 4'h3：RTS； 4'h5：SQEr； 4'h6：Error； 4'h7：SQ Draining； other：不支持
     hca_qpc.qpc_seg8.txeng_sq_err_flag = '0;  // QP首次置err的异常原因为SQ请求异常的标志
     hca_qpc.qpc_seg8.txeng_resp_err_flag = '0;  // QP首次置err的异常原因为RESP请求异常的标志
@@ -220,7 +199,6 @@ task init_qpc(
     hca_qpc.qpc_seg8.txeng_sq_err_wqe_idx = '0;  // TX_ENG在处理SQ请求发生错误时，需要调度重传的WQE wrid
     hca_qpc.qpc_seg8.txeng_qp_err_psn_l = '0;  // TX_ENG在处理SQ/RESP请求发生错误时，记录的该请求携带的起始psn低16位
     hca_qpc.qpc_seg8.txeng_qp_err_psn_h = '0;  // TX_ENG在处理SQ/RESP请求发生错误时，记录的该请求携带的起始psn高16位
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_npsn = sw.send_start_psn;  // TX_ENG计算的下一个请求包的PSN，仅在SQ请求时更新，重传时会回退，
     hca_qpc.qpc_seg8.txeng_send_req_next_ssn_l = '0;  // TX_ENG计算的下一个WQE的SSN低8位，仅在SQ请求时更新，重传时会回退
     hca_qpc.qpc_seg8.txeng_send_req_next_ssn_h = '0;  // TX_ENG计算的下一个WQE的SSN低8位，仅在SQ请求时更新，重传时会回退
@@ -230,7 +208,6 @@ task init_qpc(
     hca_qpc.qpc_seg8.txeng_tx2rx_retry_flag = '0;  // 1.TX_ENG在重传SQ REQ时拉起该标志， 2.在执行非重传SQ请求时，当txeng_tx2rx_retry_flag为1并且TX_ENG判断到rxi_newset_ack_psn >= txeng_tx2rx_retry_end_psn时拉低该标志，表示重传的请求已经全部被RX应答了。SQ、RESP请求时更新。
     hca_qpc.qpc_seg8.txeng_ssnt_wr_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // 当前QP的ssnt wr指针，QP为RC/DCI时有效；
     hca_qpc.qpc_seg8.txeng_irrl_wr_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // 当前QP的irrl wr指针，QP为RC/DCI时有效；
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_read_bitmap_l = '0;  // 在QP开启自研ooo选择性重传时有效，维护TX发出的RDMA请求的bitmap 低128位。采用业务报文的psn低8位作为索引，对bitmap做清0置位操作：置位条件是发read、atomic报文，其他业务报文(不包含cnp)都是清零
     hca_qpc.qpc_seg8.txeng_read_bitmap_h = '0;  // 在QP开启自研ooo选择性重传时有效，维护TX发出的RDMA请求的bitmap 高128位。采用业务报文的psn低8位作为索引，对bitmap做清0置位操作：置位条件是发read、atomic报文，其他业务报文(不包含cnp)都是清零
     hca_qpc.qpc_seg8.txeng_sack_retry_cnt = '0;  // 在QP开启veroce ooo选择性重传时有效，直接同步txwqe传递qpc index有效请求时ctrl info里的sack_retry_cnt
@@ -242,26 +219,18 @@ task init_qpc(
     hca_qpc.qpc_seg8.txeng_oldest_unack_psn = '0;  // 最旧未应答的PSN，仅在RC SQ、RESP请求时更新
     hca_qpc.qpc_seg8.txeng_tmo_log_rtm = '0;  // 超时退避倍数 = 2^txeng_tmo_log_rtm，实际取值范围0~8。仅在RC SQ、RESP请求时更新 step1.判断有请求被应答时，该值取0。 step2.接着step1判断，当开启超时退避且当前为nak/tmo重传首个请求时，进行计算：nak_cnt+qpc.log_rtm-1。
     hca_qpc.qpc_seg8.txeng_sync_rd_rsp_retry_phase_tag = '0;  // 在QP开启veroce ooo选择性重传时有效，当txwqe传递qpc index有效的read rsp/atomic ack请求时，直接同步ctrl info里的sch2rxi_rd_rsp_retry_phase_tag
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_txe2cc_bc_syn_flag = '0;  // 与HWCC模块的bc_clr_flag不一致时，须清零txeng_cc_record_byte_length，并同步该标志为HWCC模块的bc_clr_flag
     hca_qpc.qpc_seg8.txeng_cc_record_byte_length = '0;  // txeng统计的已发送报文字节数（单位：Byte），当反馈升速请求给拥塞模块后，该值须减去寄存器配置的升速阈值。
     hca_qpc.qpc_seg8.txeng_rtt_stamp_h = '0;  // TX_ENG发送打bth_a的报文，且rtt_phase_flag相等时，记录系统时间，单位1us
     hca_qpc.qpc_seg8.txeng_rtt_psn = '0;  // TX_ENG发送打bth_a的报文，且rtt_phase_flag相等时，记录报文psn
     hca_qpc.qpc_seg8.txeng_rtt_phase_flag = '0;  // TX_ENG发送打bth_a的报文，且rtt_phase_flag相等时，翻转该标志位
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_newest_cqe_wrid_vld_flag = '0;  // TXENG最新上报的cqe对应wrid有效标志，用于dfx
     hca_qpc.qpc_seg8.txeng_newest_cqe_wrid = '0;  // TXENG最新上报的cqe对应的wrid，用于dfx
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
     hca_qpc.qpc_seg8.txeng_ctrl_info_cnt = '0;  // txeng每处理一个qp index有效的ctrl info则++，计满翻转
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
-    hca_qpc.qpc_seg8.rsv = '0;  // rsv
 
     // ── seg 09 ──
     hca_qpc.qpc_seg9.rxi_upsn = '0  // init: send_start_psn;  // rxi最老未应答psn；乱序接收和选择性重传时，代表未应答窗口的左边界
     hca_qpc.qpc_seg9.rxi_upsn_synced = '0;  // 首次检测到软件qp_state=RTS时，用send_start_psn同步upsn后置1
-    hca_qpc.qpc_seg9.rsv = '0;  // rsv
     hca_qpc.qpc_seg9.rxi_irrl_sge_va = '0;  // irrl断点irrl_sge_va
     hca_qpc.qpc_seg9.rxi_irrl_sge_lkey = '0;  // irrl断点irrl_sge_lkey
     hca_qpc.qpc_seg9.rxi_irrl_sge_length = '0;  // irrl断点irrl_sge_length
@@ -281,7 +250,6 @@ task init_qpc(
     hca_qpc.qpc_seg9.rxi_irrl_rd_ptr = veroce_en ? hca_qpc.start_ssn[8:0]-1 : '0;  // irrl读指针
     hca_qpc.qpc_seg9.rxi_chk_err_flag = '0;  // 是否有校验出致命错误标记
     hca_qpc.qpc_seg9.rxi_swcc_time_vld = '0;  // rxi_swcc_time有效标识
-    hca_qpc.qpc_seg9.rsv = '0;  // rsv
     hca_qpc.qpc_seg9.rxi_resp_bitmap = '0;  // 乱序接收和选择性重传时使用，维护rxi收到的read_resp/atomic_ack报文情况，在收到read_resp/atomic_ack报文的时候更新 veRoCE复用：接收read_resp/ato_ack的bitmap，veRoCE的qp在RTS时会由RXI自己初始化为send_start_psn[8] ? ({256{1'b1}} << send_start_psn[7:0])： ~ ({256{1'b1}} << send_start_psn[7:0])
     hca_qpc.qpc_seg9.rxi_irrl_sqe_wrid = '0;  // irrl断点irrl_sqe_wrid
     hca_qpc.qpc_seg9.rxi_swcc_time = '0;  // RoCE/veRoCE场景下，ECN为10时上报SWCC事件的时间戳，单位ms
@@ -331,7 +299,6 @@ task init_qpc(
     hca_qpc.qpc_seg10.rxi_unack_wqe_start_psn = '0  // init: send_start_psn;  // 用于记录每次最开始未确认的WQE的start_psn，用于重传时通知TX需要重传的起点，可以计算go back to 0/n
     hca_qpc.qpc_seg10.rxi_unack_wqe_ce = '0;  // 记录从ssnt中读出的未应答的sqe.ce
     hca_qpc.qpc_seg10.rxi_unack_wqe_ds = '0;  // 记录从ssnt中读出的未应答的sqe.ds(64B为单位)
-    hca_qpc.qpc_seg10.rsv = '0;  // rsv
     hca_qpc.qpc_seg10.rxi_unack_wqe_wrid = '0;  // 用于记录每次最开始未确认的sqe的wrid；sqd2rts 时 txwqe 会同步该wrid
     hca_qpc.qpc_seg10.rxi_unack_wqe_irrl_ptr = '0;  // 记录重传时从ssnt读出来的irrl_wr_ptr信息；sqd2rts 时 txwqe 会同步该irrl ptr
     hca_qpc.qpc_seg10.rxi_ssnt_bp_vld = '0;  // 表示从ssnt读出来的未应答信息是否有效。0无效，1有效
@@ -341,7 +308,6 @@ task init_qpc(
     hca_qpc.qpc_seg10.rxi_retry_phase_flag = '0;  // rxi端重传标记，同步成rxi_retry_flag，通知TX有重传
     hca_qpc.qpc_seg10.rxi_retrying_flag = '0;  // rxi端发起sq重传后置1，当收到校验通过的应答psn达到tx_retry_end_psn后置0。供ack_timeout_proc模块判断是否要触发超时重传
     hca_qpc.qpc_seg10.rxi_dc_conn_flag = '0;  // rxi端发起重传时，需要重传建链包将其置1
-    hca_qpc.qpc_seg10.rsv = '0;  // rsv
     hca_qpc.qpc_seg10.rxi_sr_tmo_vld = '0;  // 乱序接收和选择性重传使用，rxi记录是否注册过短超时
     hca_qpc.qpc_seg10.rxi_rtt_phase_flag = '0;  // rxi接收应答，如果不等于tx_rtt_phase_flag且应答psn>=tx_rtt_psn，翻转rxi_rtt_phase_flag，并计算RTT记录
     hca_qpc.qpc_seg10.rxi_sq_oldest_upsn_synced = '0;  // 首次检测到软件qp_state=RTS时，用send_start_psn同步rxi_sq_oldest_unack_psn和rxi_unack_wqe_start_psn后置1
@@ -373,7 +339,6 @@ task init_qpc(
     hca_qpc.qpc_seg10.rxi_dif_data = '0;  // rxi暂存message的dif校验数据中间结果 veRoCE复用[159:152]：收到sack后，通知TXWQE进行选择性重传的rxi_req_sack_retry_cnt，每次触发新选择性重传时++ veRoCE复用[135:128]：收到sack后，通知TXWQE进行选择性重传的长度rxi_req_sack_len veRoCE复用[127:0]：收到sack后，通知TXWQE进行选择性重传的rxi_req_sack_bitmap
     hca_qpc.qpc_seg10.rxi_complete_irrl_next_wqe_start_ptr = '0;  // 记录已完成WQE的irrl_next_wqe_start_ptr，从SSNT中读出 在乱序接收和选择性重传时，供TXWQE识别IRRL的剩余空间 veRoCE复用：记录最后一笔已完成WQE的SSNT.irrl_wr_ptr，供TXWQE识别IRRL的剩余空间
     hca_qpc.qpc_seg10.rxi_unack_irrl_next_wqe_start_ptr = '0;  // 记录从ssnt中读出的未应答WQE的irrl_next_wqe_start_ptr
-    hca_qpc.qpc_seg10.rsv = '0;  // rsv
     hca_qpc.qpc_seg10.rxi_cnp_path_bitmap = '0;  // 记录当前GAP内，对应path是否已调度CNP，避免多次门铃
     hca_qpc.qpc_seg10.rxi_cnp_phase_flag = '0;  // [3:0]对应PATH3~PATH0，对应PATH需要调度CNP包时，对应bit翻转为~txwqe_txi_cnp_phase_tag[]
     hca_qpc.qpc_seg10.rxi_cnp_cc_time_vld = '0;  // rxi_cnp_cc_time是否有效的标识。第一次上送完cnp事件后置1。后续就可以使用rxi_cnp_cc_time来过滤
@@ -402,15 +367,12 @@ task init_qpc(
     hca_qpc.qpc_seg11.rxt_page_pa_vld = '0;  // page_pa有效
     hca_qpc.qpc_seg11.rxt_rtr_first_pkt = '0;  // RTR状态下收到第一个正确的请求包。
     hca_qpc.qpc_seg11.rxt_qp_err_flag = '0;  // RXT_PRE出现致命错误时拉高，过滤后续请求包 veRoCE场景：出现致命错误，后续只能接收qp_err_psn前面的包
-    hca_qpc.qpc_seg11.rsv = '0;  // rsv
     hca_qpc.qpc_seg11.rxt_left_psn = hca_qpc.qpc_seg00.rcv_start_psn;  // 乱序接收时，接收有效请求的左边界
-    hca_qpc.qpc_seg11.rsv = '0;  // rsv
     hca_qpc.qpc_seg11.rxt_right_psn = hca_qpc.qpc_seg00.rcv_start_psn-1;  // 乱序接收时，接收有效请求的右边界
     hca_qpc.qpc_seg11.rxt_req_bitmap = // TODO(manual): rcv_start_psn[8] ? ({256{1'b1}} << rcv_start_psn[7:0])： ~ ({256{1'b1}} << rcv_start_psn[7:0]);  // 乱序接收时，接收请求的bitmap
     hca_qpc.qpc_seg11.rxt_mrc_key = '0;  // 存放write首包携带的reth_key，DIF场景下使用 veRoCE场景： [9:0]：复用为rxt_page_num，表示当前page_pa对应的是RQ/SRQ的第几个页 [31:10]：rsv
     hca_qpc.qpc_seg11.rxt_mrc_ro_write = '0;  // 存放mrc信息：启用宽松排序写属性
     hca_qpc.qpc_seg11.rxt_mrc_ro_read = '0;  // 存放mrc信息：启用宽松排序读属性
-    hca_qpc.qpc_seg11.rsv = '0;  // rsv
     hca_qpc.qpc_seg11.rxt_block_offset = '0;  // 上一包在DIF BLOCK内的偏移，用于计算当前包内的DIF长度
     hca_qpc.qpc_seg11.rxt_mrc_info_vld = '0;  // mrc信息有效
     hca_qpc.qpc_seg11.rxt_mrc_access_mode = '0;  // 存放mrc信息：访问模式： 0x0: PA模式 0x1: VA模式
@@ -430,7 +392,6 @@ task init_qpc(
     hca_qpc.qpc_seg11.rxt_dif_dmalen = veroce_en ? {8'b0,hca_qpc.qpc_seg00.rcv_start_psn-1} : '0;  // DIF模式下的待收包长度，用于校验message总长度 veRoCE场景： [23:0]：复用为rxt_sack_right_psn，接收请求达到阈值或者TMO，SACK的右边界 [31:24]：复用为rxt_sack_send_cnt，接收请求达到阈值或者TMO，触发SACK门铃时cnt++
     hca_qpc.qpc_seg11.swcc_timestamp = '0;  // RoCE/veRoCE场景下，ECN为10时上报SWCC事件的时间戳，单位ms
     hca_qpc.qpc_seg11.swcc_timestamp_vld = '0;  // SWCC时间戳有效
-    hca_qpc.qpc_seg11.rsv = '0;  // rsv
 
     // ── seg 12 ──
     hca_qpc.qpc_seg12.rxt_qp_state = 4'h3;  // RX T端的qp_state： 4'h3：RTS； 4'h6：Error； other：unkown。
@@ -439,23 +400,19 @@ task init_qpc(
     hca_qpc.qpc_seg12.rxt_syn_to_wqe_err_flag = '0;  // T端UD置错或者收到置错fake时拉高，用于TX_WQE进行RQ FLUSH流程处理
     hca_qpc.qpc_seg12.rxt_cnp_phase_flag = '0;  // [3:0]对应PATH3~PATH0，对应PATH需要调度CNP包时，对应bit翻转为~txwqe_txt_cnp_phase_tag[]
     hca_qpc.qpc_seg12.rxt_rsp_retry_phase_flag = '0;  // veRoCE场景：rsp长超时重传flag，每次触发新的go back n重传时翻转为~txeng_rsp_retry_phase_flag（待TXENG补充）
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_path_index = '0;  // veRoCE场景：请求包中的sport对应路径，用于TX调度ack/nak/sack/cnp/rtt时选择对应的path_id
     hca_qpc.qpc_seg12.rxt_ack_syndrome = '0;  // 同步给TX的ACK调度请求syndrome信息
     hca_qpc.qpc_seg12.rxt_resp_newest_psn = hca_qpc.qpc_seg00.rcv_start_psn-1;  // 需要调度响应包的最新psn veRoCE场景：接收请求的最新psn
     hca_qpc.qpc_seg12.rxt_rmsn = hca_qpc.start_ssn-1;  // 响应程序的当前消息序列号 veRoCE场景：接收请求的最新msn
     hca_qpc.qpc_seg12.rxt_newest_credit = '0;  // 响应测最新的credit
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_nak_phase_flag = '0;  // 当前调度NAK包
     hca_qpc.qpc_seg12.rxt_ack_retry_phase_flag = '0;  // RX收到重传请求需要回ack的标识位
     hca_qpc.qpc_seg12.rxt_resp_retry_cnt = '0;  // RX收到重传Read/Atomic请求后，校验有效重传时更新的重传计数，每次触发新的重传cnt++
     hca_qpc.qpc_seg12.rxt_resp_retry_start_ptr = '0;  // RX收到重传Read/Atomic请求后，校验有效重传时更新的重传起始指针
     hca_qpc.qpc_seg12.rxt_resp_retry_end_ptr = '0;  // RX收到重传Read/Atomic请求后，校验有效重传时更新的重传结束指针（next ptr，不需要发）
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_sel_retry_cnt = '0;  // 选择性重传时，维护收到的重传Read Req重传计数，每次触发新的重传cnt++ veRoCE场景：选择性重传计数，每次触发新的选择性重传cnt++
     hca_qpc.qpc_seg12.rxt_sel_retry_start_ptr = '0;  // 选择性重传时，维护收到的重传Read Req空洞起点，判定新的重传时更新
     hca_qpc.qpc_seg12.rxt_sel_retry_end_ptr = '0;  // 选择性重传时，维护收到的重传Read Req空洞结尾，判定新的重传时更新（next ptr，不需要发）
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_hw_counter_completed = '0;  // 已上报CQE的个数，指向下一个即将消耗的hw_counter
     hca_qpc.qpc_seg12.rxt_rqe_uncompleted_flag = '0;  // 当前有已使用的RQE未上报CQE
     hca_qpc.qpc_seg12.rxt_resp_rd_flag = '0;  // RX TAG模块发起resp cache重传读的标识
@@ -478,7 +435,6 @@ task init_qpc(
     hca_qpc.qpc_seg12.rxt_err_aecode = '0;  // 出现致命错误的子类型
     hca_qpc.qpc_seg12.rxt_hole_db_flag = '0;  // 乱序接收时，当前空洞是否按过响应门铃的标识位 veRoCE场景：复用为rxt_err_cqe_en，出现错误的上报事件类型
     hca_qpc.qpc_seg12.rxt_wait_db_cnt = '0;  // 乱序接收时，上次按门铃后，接收的未按门铃的请求计数
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_sel_retry_hole_vld = '0;  // 选择性重传时，暂存重传read首包携带的空洞信息，待同步给TX
     hca_qpc.qpc_seg12.rxt_sel_retry_hole_ptr = '0;  // 选择性重传时，暂存重传read首包携带的空洞信息，待同步给TX
     hca_qpc.qpc_seg12.rxt_sel_retry_hole_psn = veroce_en ? hca_qpc.start_ssn-1 : '0;  // 选择性重传时，暂存重传read首包携带的空洞信息，待同步给TX veRoCE场景：复用为rxt_rsp_amsn，确认已完成的rsp_msn，[7:0]重传的起始ptr
@@ -487,10 +443,8 @@ task init_qpc(
     hca_qpc.qpc_seg12.rxt_req_cnt = '0;  // 乱序接收时，当前收请求的空洞长度
     hca_qpc.qpc_seg12.rxt_cnp_timestamp_vld = '0;  // 调度cnp的时间戳有效标识
     hca_qpc.qpc_seg12.rxt_cnp_path_bitmap = '0;  // 记录当前GAP内，对应path是否已调度CNP，避免多次门铃
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_a_max_psn_vld = '0;  // 乱序接收时，带A bit的请求右边界有效
     hca_qpc.qpc_seg12.rxt_a_max_psn = '0;  // 乱序接收时，带A bit的请求右边界
-    hca_qpc.qpc_seg12.rsv = '0;  // rsv
     hca_qpc.qpc_seg12.rxt_read_max_psn_vld = '0;  // 乱序接收时，read请求右边界有效
     hca_qpc.qpc_seg12.rxt_read_max_psn = hca_qpc.qpc_seg00.rcv_start_psn-1;  // 乱序接收时，read请求右边界 veRoCE场景：复用为rxt_rmsn_last_psn，记录已应答MSG的last_psn
     hca_qpc.qpc_seg12.rxt_dif_data = '0;  // 暂存DIF的中间结果 veRoCE场景：[127:0]复用为rxt_rsp_bitmap，接收ack_rsp/sack_rsp的bitmap
