@@ -237,8 +237,14 @@ def load_sheet(path: Path, sheet: str) -> pd.DataFrame:
 
 def build_task(df: pd.DataFrame, xlsx_name: str) -> str:
     """生成 task init_qpc 的 SystemVerilog 代码。"""
-    # 过滤目标 seg
+    # 过滤目标 seg，排除 rsv 字段，排除初始值为空的字段
     work_df = df[df["_seg"].isin(TARGET_SEGS)].copy()
+    work_df = work_df[
+        work_df["信号名"].apply(lambda n: pd.notna(n) and str(n).strip().lower() != "rsv")
+    ]
+    work_df = work_df[
+        work_df["初始值"].apply(lambda v: pd.notna(v) and str(v).strip() != "")
+    ]
 
     total_fields = len(work_df)
     out: list[str] = []
@@ -248,7 +254,7 @@ def build_task(df: pd.DataFrame, xlsx_name: str) -> str:
 
     # ════════════ 文件头 ════════════
     ln("// ==============================================================")
-    ln("//  task init_qpc  – QPC 初始化 (seg 3~16)")
+    ln("//  task init_qpc  – QPC 初始化 (seg 3~16，排除 rsv 字段和初始值为空的字段)")
     ln(f"//  来源 : {xlsx_name}  Sheet: {SHEET}")
     ln(f"//  生成字段数: {total_fields}")
     ln(f"//  范围: seg {min(TARGET_SEGS)} ~ {max(TARGET_SEGS)} (跳过 seg 0,1,2)")
@@ -300,8 +306,14 @@ def main():
     print(f"  总字段数   : {len(df)}")
     print(f"  目标 seg   : {sorted(TARGET_SEGS)}")
 
-    work_df = df[df["_seg"].isin(TARGET_SEGS)]
-    print(f"  生成字段数 : {len(work_df)}")
+    work_df = df[df["_seg"].isin(TARGET_SEGS)].copy()
+    work_df = work_df[
+        work_df["信号名"].apply(lambda n: pd.notna(n) and str(n).strip().lower() != "rsv")
+    ]
+    work_df = work_df[
+        work_df["初始值"].apply(lambda v: pd.notna(v) and str(v).strip() != "")
+    ]
+    print(f"  生成字段数 : {len(work_df)} (排除 rsv 和空初始值)")
 
     code = build_task(df, xlsx_name)
     out_path = out_dir / "init_qpc.sv"
